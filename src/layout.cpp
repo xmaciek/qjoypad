@@ -55,6 +55,8 @@ LayoutManager::LayoutManager( bool useTrayIcon, const QString &devdir, const QSt
 
     //no layout loaded at start.
     setLayoutName(QString::null);
+    updateJoyDevs();
+    load();
 }
 
 LayoutManager::~LayoutManager() {

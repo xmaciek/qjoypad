@@ -23,6 +23,14 @@
 //variables needed in various functions in this file
 QPointer<LayoutManager> layoutManagerPtr;
 
+#define EXIT_CODE_CANNOT_CREATE_SETTINGS_DIR 1
+#define EXIT_CODE_PATH_NOT_DIRECTORY 2
+#define EXIT_CODE_ILLEGAL_ARGUMENT 3
+#define EXIT_CODE_TOO_MANY_ARGUMENTS 4
+#define EXIT_CODE_UNEXPECTED_ERROR_WITH_SIGNAL 5
+#define EXIT_CODE_UNAVAILABLE_SYSYTEM_TRAY 6
+
+
 //signal handler for SIGUSR2
 //SIGUSR2 means that a new layout should be loaded. It is saved in
 // ~/.qjoypad/layout, where the last used layout is put.
@@ -43,6 +51,55 @@ void catchSIGUSR1( int sig ) {
     signal( sig, catchSIGUSR1 );
 }
 
+
+class PidFile {
+public:
+    PidFile();
+    ~PidFile();
+    bool isAlreadyRunning() const;
+    int getPid() const;
+
+private:
+    QFile m_file;
+    bool m_isFirstInstance;
+    int m_pidNumber;
+};
+
+int PidFile::getPid() const
+{
+    return m_pidNumber;
+}
+
+bool PidFile::isAlreadyRunning() const
+{
+    return !m_isFirstInstance;
+}
+
+PidFile::PidFile() :
+    m_file( "/tmp/qjoypad.pid" ),
+    m_isFirstInstance( !m_file.exists() ),
+    m_pidNumber( 0 )
+{
+    if ( m_isFirstInstance ) {
+        if ( m_file.open( QIODevice::WriteOnly ) ) {
+            m_pidNumber = getpid();
+            QTextStream( &m_file ) << m_pidNumber;
+            m_file.close();
+        }
+    } else {
+        if ( m_file.open( QIODevice::ReadOnly ) ) {
+            QTextStream( &m_file ) >> m_pidNumber;
+            m_file.close();
+        }
+    }
+}
+
+PidFile::~PidFile()
+{
+    if ( m_isFirstInstance ) {
+        m_file.remove();
+    }
+}
 
 int main( int argc, char **argv )
 {
@@ -73,7 +130,7 @@ int main( int argc, char **argv )
     if (!dir.exists() && !dir.mkdir(settingsDir)) {
         errorBox(app.translate("main","Couldn't create the QJoyPad save directory"),
                  app.translate("main","Couldn't create the QJoyPad save directory: %s").arg(settingsDir));
-        return 1;
+        return EXIT_CODE_CANNOT_CREATE_SETTINGS_DIR;
     }
 
 
@@ -128,7 +185,7 @@ int main( int argc, char **argv )
                 else {
                     errorBox(app.translate("main","Not a directory"),
                              app.translate("main","Path is not a directory: %1").arg(optarg));
-                    return 1;
+                    return EXIT_CODE_PATH_NOT_DIRECTORY;
                 }
                 break;
 
@@ -149,7 +206,7 @@ int main( int argc, char **argv )
                 fprintf(stderr, "%s", qPrintable(app.translate("main",
                     "Illeagal argument.\n"
                     "See `%1 --help` for more information\n").arg(argc > 0 ? argv[0] : "qjoypad")));
-                return 1;
+                return EXIT_CODE_ILLEGAL_ARGUMENT;
         }
     }
 
@@ -160,7 +217,7 @@ int main( int argc, char **argv )
             fprintf(stderr, "%s", qPrintable(app.translate("main",
                 "Too many arguments.\n"
                 "See `%1 --help` for more information\n").arg(argc > 0 ? argv[0] : "qjoypad")));
-            return 1;
+            return EXIT_CODE_TOO_MANY_ARGUMENTS;
         }
     }
 
@@ -177,50 +234,35 @@ int main( int argc, char **argv )
         }
     }
 
+    PidFile pidFile;
+    if ( pidFile.isAlreadyRunning() ) {
+        const int pid = pidFile.getPid();
+        //if we can signal the pid (ie, if the process is active)
+        if ( kill( pid, 0 ) != 0 ) {
+            errorBox( app.translate( "main", "Instance Error" ),
+                      app.translate( "main", "Probably former instance of QJoyPad didn't exit gracefully,\nif so, please delete stale file /tmp/qjoypad.pid" ) );
+            return EXIT_CODE_UNEXPECTED_ERROR_WITH_SIGNAL;
+        }
 
-
-
-
-    //create a pid lock file.
-    QFile pidFile( "/tmp/qjoypad.pid" );
-    //if that file already exists, then qjoypad is already running!
-    if (pidFile.exists())
-    {
-        int pid = 0;
-        if (pidFile.open( QIODevice::ReadOnly ))
-        {
-            //try to get that pid...
-            QTextStream( &pidFile ) >> pid;
-            pidFile.close();
-            //if we can signal the pid (ie, if the process is active)
-            if (kill(pid,0) == 0)
-            {
-                //then prevent two instances from running at once.
-                //however, if we are setting the layout or updating the device
-                //list, this is not an error and we shouldn't make one!
-                if (layout.isEmpty() && !update)
-                    errorBox(app.translate("main","Instance Error"),
+        //then prevent two instances from running at once.
+        //however, if we are setting the layout or updating the device
+        //list, this is not an error and we shouldn't make one!
+        if (layout.isEmpty() && !update) {
+            errorBox(app.translate("main","Instance Error"),
                              app.translate("main","There is already a running instance of QJoyPad; please close\nthe old instance before starting a new one."));
-                else {
-                    //if one of these is the case, send the approrpriate signal!
-                    if (update) {
-                        kill(pid,SIGUSR1);
-                    }
-                    if (!layout.isEmpty()) {
-                        kill(pid,SIGUSR2);
-                    }
-                }
-                //and quit. We don't need two instances.
-                return 0;
+        } else {
+            //if one of these is the case, send the approrpriate signal!
+            if (update) {
+                kill(pid,SIGUSR1);
+            }
+            if (!layout.isEmpty()) {
+                kill(pid,SIGUSR2);
             }
         }
+        //and quit. We don't need two instances.
+        return 0;
     }
-    //now we can try to create and write our pid to the lock file.
-    if (pidFile.open( QIODevice::WriteOnly ))
-    {
-        QTextStream( &pidFile ) << getpid();
-        pidFile.close();
-    }
+
 
     if (forceTrayIcon) {
         int sleepCounter = 0;
@@ -230,33 +272,19 @@ int main( int argc, char **argv )
             if (sleepCounter > 20) {
                 errorBox(app.translate("main","System tray isn't loading"),
                          app.translate("main","Waited more than 20 seconds for the system tray to load. Giving up."));
-                return 1;
+                return EXIT_CODE_UNAVAILABLE_SYSYTEM_TRAY;
             }
         }
     }
+
     //create a new LayoutManager with a tray icon / floating icon, depending
     //on the user's request
-    LayoutManager layoutManager(useTrayIcon,devdir,settingsDir);
-    layoutManagerPtr = &layoutManager;
-    QObject::connect( &layoutManager, &LayoutManager::quit, &app, &QApplication::quit );
-
-    //build the joystick device list for the first time,
-    //buildJoyDevices();
-    layoutManager.updateJoyDevs();
-    
-    //load the last used layout (Or the one given as a command-line argument)
-    layoutManager.load();
+    layoutManagerPtr = new LayoutManager( useTrayIcon, devdir, settingsDir );
+    QObject::connect( layoutManagerPtr, &LayoutManager::quit, &app, &QApplication::quit );
 
     //prepare the signal handlers
     signal( SIGUSR1, catchSIGUSR1 );
     signal( SIGUSR2, catchSIGUSR2 );
 
-    //and run the program!
-    int result = app.exec();
-
-    //remove the lock file...
-    pidFile.remove();
-
-    //and terminate!
-    return result;
+    return app.exec();
 }
