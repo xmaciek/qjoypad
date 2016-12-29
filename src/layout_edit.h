@@ -1,6 +1,7 @@
 #ifndef QJOYPAD_LAYOUT_EDIT_H
 #define QJOYPAD_LAYOUT_EDIT_H
 
+#include <QMainWindow>
 #include <QScrollArea>
 #include <QStackedWidget>
 
@@ -14,7 +15,7 @@ class LayoutEdit;
 
 class LayoutManager;
 
-class LayoutEdit : public QWidget {
+class LayoutEdit : public QMainWindow {
 	Q_OBJECT
 	public:
         LayoutEdit( LayoutManager* l );
@@ -29,7 +30,8 @@ class LayoutEdit : public QWidget {
         void appFocusChanged(QWidget *old, QWidget *now);
     private slots:
         void load(int index);
-	protected:
+protected:
+    QWidget* m_centralWidget;
 		//the layout manager this represents
         LayoutManager* lm;
 		//parts of the dialog:

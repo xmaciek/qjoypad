@@ -2,8 +2,9 @@
 #include "config.h"
 
 //build the dialog
-LayoutEdit::LayoutEdit( LayoutManager* l )
-    : QWidget(0),
+LayoutEdit::LayoutEdit( LayoutManager* l ) :
+    QMainWindow( 0 ),
+    m_centralWidget( new QWidget( 0 ) ),
       lm(l),
       mainLayout(0),
       padStack(0),
@@ -15,12 +16,14 @@ LayoutEdit::LayoutEdit( LayoutManager* l )
       btnRev(0),
       btnExport(0),
       btnImport(0),
-      btnRename(0) {
+      btnRename(0)
+{
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle( QJOYPAD_NAME );
     setWindowIcon(QPixmap(QJOYPAD_ICON64));
 
-    mainLayout = new QVBoxLayout(this);
+    setCentralWidget( m_centralWidget );
+    mainLayout = new QVBoxLayout( m_centralWidget );
     mainLayout->setSpacing(5);
     mainLayout->setMargin(5);
 
