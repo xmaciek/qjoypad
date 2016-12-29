@@ -1,6 +1,7 @@
 #ifndef QJOYPAD_LAYOUT_EDIT_H
 #define QJOYPAD_LAYOUT_EDIT_H
 
+#include <QAction>
 #include <QMainWindow>
 #include <QScrollArea>
 #include <QStackedWidget>
@@ -15,6 +16,8 @@ class LayoutEdit;
 
 class LayoutManager;
 
+typedef QPointer<QAction> QActionPtr;
+
 class LayoutEdit : public QMainWindow {
 	Q_OBJECT
 	public:
@@ -28,8 +31,16 @@ class LayoutEdit : public QMainWindow {
 		void focusStateChanged(bool);
     public slots:
         void appFocusChanged(QWidget *old, QWidget *now);
-    private slots:
-        void load(int index);
+private slots:
+    void load(int index);
+    // clears layout of pad settings of top widget stack;
+    void clearTopPadLayout();
+    // casts a magic spell on layout of pad settings of top widget stack;
+    void wizardTopPadLayout();
+
+    // some actions should be disabled on [NO LAYOUT] combobox
+    void enableCertainActions( bool );
+
 protected:
     QWidget* m_centralWidget;
 		//the layout manager this represents
@@ -41,6 +52,25 @@ protected:
         FlashRadioArray *joyButtons;
         QComboBox* cmbLayouts;
         QPushButton *btnAdd, *btnRem, *btnUpd, *btnRev, *btnExport, *btnImport, *btnRename;
+    QActionPtr m_actionCloseWindow;
+    QActionPtr m_actionQuit;
+    // ----
+    QActionPtr m_actionNewLayout;
+    QActionPtr m_actionRemoveLayout;
+    // ----
+    QActionPtr m_actionOpen;
+    QActionPtr m_actionSave;
+    QActionPtr m_actionSaveAs;
+    QActionPtr m_actionRename;
+    // ----
+    QActionPtr m_actionClear;
+    QActionPtr m_actionQuickSet;
+    QActionPtr m_actionRevert;
+    // ----
+    QActionPtr m_actionUseThemeTrayIcon;
+    QActionPtr m_actionShowMenuBar;
+    QActionPtr m_actionShowToolBar;
+
 };
 
 #endif
