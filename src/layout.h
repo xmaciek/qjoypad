@@ -42,7 +42,8 @@ class LayoutManager : public QObject {
 
 		//produces a list of the names of all the available layout.
         QStringList getLayoutNames() const;
-	public slots:
+public slots:
+    void requestQuit();
 		//load a layout with a given name
 		bool load(const QString& name);
 		//look for the last loaded layout and try to load that.
@@ -113,6 +114,8 @@ class LayoutManager : public QObject {
     private slots:
         void udevUpdate();
 #endif
+signals:
+    void quit();
 };
 
 #endif

@@ -44,14 +44,14 @@ LayoutManager::LayoutManager( bool useTrayIcon, const QString &devdir, const QSt
     else {
         FloatingIcon* icon = new FloatingIcon(QJOYPAD_ICON64,&trayMenu,0,"tray");
         connect(icon, SIGNAL(clicked()), this, SLOT(iconClick()));
-        connect(icon, SIGNAL(rejected()), qApp, SLOT(quit()));
-        connect(icon, SIGNAL(accepted()), qApp, SLOT(quit()));
+        connect(icon, SIGNAL(rejected()), this, SLOT( requestQuit() ) );
+        connect(icon, SIGNAL(accepted()), this, SLOT( requestQuit() ) );
         icon->show();
     }
 
     connect(updateLayoutsAction, SIGNAL(triggered()), this, SLOT(fillPopup()));
     connect(updateDevicesAction, SIGNAL(triggered()), this, SLOT(updateJoyDevs()));
-    connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
+    connect(quitAction, SIGNAL(triggered()), this, SLOT( requestQuit() ) );
 
     //no layout loaded at start.
     setLayoutName(QString::null);
@@ -715,4 +715,10 @@ void LayoutManager::removeJoyPad(int index) {
         joypad->close();
         available.remove(index);
     }
+}
+
+void LayoutManager::requestQuit()
+{
+    saveDefault();
+    emit quit();
 }

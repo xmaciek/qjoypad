@@ -238,6 +238,7 @@ int main( int argc, char **argv )
     //on the user's request
     LayoutManager layoutManager(useTrayIcon,devdir,settingsDir);
     layoutManagerPtr = &layoutManager;
+    QObject::connect( &layoutManager, &LayoutManager::quit, &app, &QApplication::quit );
 
     //build the joystick device list for the first time,
     //buildJoyDevices();
@@ -252,9 +253,6 @@ int main( int argc, char **argv )
 
     //and run the program!
     int result = app.exec();
-
-    //when everything is done, save the current layout for next time...
-    layoutManager.saveDefault();
 
     //remove the lock file...
     pidFile.remove();

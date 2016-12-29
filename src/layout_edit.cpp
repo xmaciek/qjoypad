@@ -125,7 +125,7 @@ LayoutEdit::LayoutEdit( LayoutManager* l )
     connect(close, SIGNAL(clicked()), this, SLOT(close()));
     h->addWidget(close);
     QPushButton* quit = new QPushButton(QIcon::fromTheme("application-exit"), tr("&Quit"), 0 );
-    connect( quit, SIGNAL( clicked() ), qApp, SLOT(quit()));
+    connect( quit, SIGNAL( clicked() ), lm, SLOT( requestQuit() ) );
     h->addWidget(quit);
     mainLayout->addLayout(h);
     connect(qApp, SIGNAL(focusChanged ( QWidget * , QWidget *  ) ), this, 
