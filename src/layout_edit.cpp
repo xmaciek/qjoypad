@@ -24,7 +24,7 @@ LayoutEdit::LayoutEdit( LayoutManager* l )
     mainLayout->setSpacing(5);
     mainLayout->setMargin(5);
 
-    QFrame* frame = new QFrame(this);
+    QFrame* frame = new QFrame( 0 );
     frame->setFrameStyle(QFrame::Box | QFrame::Sunken);
     QGridLayout* g = new QGridLayout(frame);
     g->setMargin(5);
@@ -32,7 +32,7 @@ LayoutEdit::LayoutEdit( LayoutManager* l )
     cmbLayouts = new QComboBox(frame);
     connect(cmbLayouts, SIGNAL(activated(int)), this, SLOT(load(int)));
 
-    QHBoxLayout *layoutLayout = new QHBoxLayout(this);
+    QHBoxLayout *layoutLayout = new QHBoxLayout( 0 );
 
     //most of these buttons can link directly into slots in the LayoutManager
     btnAdd = new QPushButton(frame);
@@ -91,14 +91,14 @@ LayoutEdit::LayoutEdit( LayoutManager* l )
     }
     
     //flash radio array
-    joyButtons = new FlashRadioArray(names, true, this );
+    joyButtons = new FlashRadioArray(names, true, 0 );
     mainLayout->addWidget( joyButtons );
     
     //we have a WidgetStack to represent the multiple joypads
-    padScroll = new QScrollArea(this);
+    padScroll = new QScrollArea( 0 );
     padScroll->setWidgetResizable(true);
     mainLayout->addWidget(padScroll);
-    padStack = new QStackedWidget( this );
+    padStack = new QStackedWidget( 0 );
     padStack->setFrameStyle(QFrame::Box | QFrame::Sunken );
     padScroll->setWidget(padStack);
 
@@ -118,13 +118,13 @@ LayoutEdit::LayoutEdit( LayoutManager* l )
     updateLayoutList();
 
     //add the buttons at the bottom.
-    QHBoxLayout* h = new QHBoxLayout(this);
+    QHBoxLayout* h = new QHBoxLayout( 0 );
     h->setMargin(0);
     h->setSpacing(5);
-    QPushButton* close = new QPushButton(QIcon::fromTheme("window-close"), tr("&Close Dialog"), this );
+    QPushButton* close = new QPushButton(QIcon::fromTheme("window-close"), tr("&Close Dialog"), 0 );
     connect(close, SIGNAL(clicked()), this, SLOT(close()));
     h->addWidget(close);
-    QPushButton* quit = new QPushButton(QIcon::fromTheme("application-exit"), tr("&Quit"), this );
+    QPushButton* quit = new QPushButton(QIcon::fromTheme("application-exit"), tr("&Quit"), 0 );
     connect( quit, SIGNAL( clicked() ), qApp, SLOT(quit()));
     h->addWidget(quit);
     mainLayout->addLayout(h);
