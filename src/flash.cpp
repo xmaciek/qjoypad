@@ -19,7 +19,7 @@ FlashButton::FlashButton(const QString &text, const QString &name, QWidget* pare
 
     setAutoDefault( false );
     setFocusPolicy(Qt::NoFocus);
-    
+    setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
 }
 
 void FlashButton::flash()
@@ -41,15 +41,9 @@ void FlashButton::flash()
 FlashRadioArray::FlashRadioArray( const QStringList &names, bool horizontal, QWidget* parent)
         : QWidget( parent )
 {
-    if (horizontal) {
-        mainLayout = new QHBoxLayout( this);
-        mainLayout->setMargin(5);
-        mainLayout->setSpacing(5);
-    } else {
-        mainLayout = new QVBoxLayout( this);
-        mainLayout->setMargin(5);
-        mainLayout->setSpacing(5);
-    }
+    mainLayout = new QBoxLayout( horizontal ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom, this );
+    mainLayout->setMargin( 0 );
+
     foreach (const QString &name, names) {
         FlashButton *button = new FlashButton( name, QString::null, this );
         buttons.append(button);
