@@ -14,6 +14,8 @@ class LayoutEdit;
 //so we can use the LayoutEditer to edit key layouts  :)
 #include "joypadw.h"
 
+#include "setting.hpp"
+
 class LayoutManager;
 
 typedef QPointer<QAction> QActionPtr;
@@ -27,7 +29,11 @@ class LayoutEdit : public QMainWindow {
 		//update the list of available layouts
 		void updateLayoutList();
         void updateJoypadWidgets();
-    signals:
+    void setActionSetting( Setting::Enum e, bool value );
+
+signals:
+    void settingChanged( Setting::Enum e, bool value );
+
 		void focusStateChanged(bool);
     public slots:
         void appFocusChanged(QWidget *old, QWidget *now);
@@ -41,6 +47,8 @@ private slots:
     // some actions should be disabled on [NO LAYOUT] combobox
     void enableCertainActions( bool );
 
+    void settingActionTriggered();
+
 protected:
     QWidget* m_centralWidget;
 		//the layout manager this represents
@@ -51,6 +59,9 @@ protected:
         QStackedWidget *padStack;
         FlashRadioArray *joyButtons;
         QComboBox* cmbLayouts;
+
+    QPointer<QToolBar> m_toolBar;
+
     QActionPtr m_actionCloseWindow;
     QActionPtr m_actionQuit;
     // ----

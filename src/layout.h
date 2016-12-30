@@ -32,6 +32,8 @@
 //So we can know if there is a graphical version of the Layout Manager displayed
 #include "layout_edit.h"
 
+#include "setting.hpp"
+
 //handles loading, saving, and changing of layouts
 class LayoutManager : public QObject {
 	friend class LayoutEdit;
@@ -76,10 +78,16 @@ public slots:
 		void fillPopup();
 		//update the list of available joystick devices
 		void updateJoyDevs();
+
     private slots:
         //when the user selects an item on the tray's popup menu
         void layoutTriggered();
-    private:
+    void updateTrayIcon();
+    void setSetting( Setting::Enum e, bool value );
+
+private:
+    void settingsLoad();
+    void settingsSave() const;
         void addJoyPad(int index);
         void addJoyPad(int index, const QString& devpath);
         void removeJoyPad(int index);
@@ -99,6 +107,10 @@ public slots:
         QAction *updateDevicesAction;
         QAction *updateLayoutsAction;
         QAction *quitAction;
+
+        bool m_showMenuBar;
+        bool m_showToolBar;
+        bool m_useTrayIconFromTheme;
 
 		//if there is a LayoutEdit open, this points to it. Otherwise, NULL.	
         QPointer<LayoutEdit> le;

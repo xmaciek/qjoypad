@@ -5,6 +5,8 @@
 #include <QMenuBar>
 #include <QToolBar>
 
+#include <cassert>
+
 //build the dialog
 LayoutEdit::LayoutEdit( LayoutManager* l ) :
     QMainWindow( 0 ),
@@ -98,12 +100,18 @@ LayoutEdit::LayoutEdit( LayoutManager* l ) :
 
     m_actionUseThemeTrayIcon = new QAction( tr( "Use tray icon from theme" ) );
     m_actionUseThemeTrayIcon->setCheckable( true );
+    m_actionUseThemeTrayIcon->setData( Setting::useTrayIconFromTheme );
+    connect( m_actionUseThemeTrayIcon, &QAction::triggered, this, &LayoutEdit::settingActionTriggered );
     m_actionShowMenuBar = new QAction( tr( "Show menubar" ) );
     m_actionShowMenuBar->setCheckable( true );
     m_actionShowMenuBar->setShortcut( QKeySequence( Qt::CTRL | Qt::Key_M ) );
+    m_actionShowMenuBar->setData( Setting::showMenuBar );
+    connect( m_actionShowMenuBar, &QAction::triggered, this, &LayoutEdit::settingActionTriggered );
     m_actionShowToolBar = new QAction( tr( "Show toolbar" ) );
     m_actionShowToolBar->setCheckable( true );
     m_actionShowToolBar->setShortcut( QKeySequence( Qt::CTRL | Qt::Key_T ) );
+    m_actionShowToolBar->setData( Setting::showToolBar );
+    connect( m_actionShowToolBar, &QAction::triggered, this, &LayoutEdit::settingActionTriggered );
 
     QMenuBar* menuBar = new QMenuBar( 0 );
     setMenuBar( menuBar );
@@ -128,19 +136,32 @@ LayoutEdit::LayoutEdit( LayoutManager* l ) :
     menu->addAction( m_actionShowMenuBar );
     menu->addAction( m_actionShowToolBar );
 
-    QToolBar* toolBar = new QToolBar( 0 );
-    addToolBar( toolBar );
-    toolBar->addAction( m_actionNewLayout );
-    toolBar->addAction( m_actionRemoveLayout );
-    toolBar->addSeparator();
-    toolBar->addAction( m_actionOpen );
-    toolBar->addAction( m_actionSave );
-    toolBar->addAction( m_actionSaveAs );
-    toolBar->addAction( m_actionRename );
-    toolBar->addSeparator();
-    toolBar->addAction( m_actionClear );
-    toolBar->addAction( m_actionQuickSet );
-    toolBar->addAction( m_actionRevert );
+    m_toolBar = new QToolBar( 0 );
+    addToolBar( m_toolBar );
+    m_toolBar->addAction( m_actionNewLayout );
+    m_toolBar->addAction( m_actionRemoveLayout );
+    m_toolBar->addSeparator();
+    m_toolBar->addAction( m_actionOpen );
+    m_toolBar->addAction( m_actionSave );
+    m_toolBar->addAction( m_actionSaveAs );
+    m_toolBar->addAction( m_actionRename );
+    m_toolBar->addSeparator();
+    m_toolBar->addAction( m_actionClear );
+    m_toolBar->addAction( m_actionQuickSet );
+    m_toolBar->addAction( m_actionRevert );
+
+    // setting window shortcuts, the action can be triggered only
+    // if the corresponding menubar/toolbar is visible. In case
+    // when the menubar/toolbar is not visible, we still want to
+    // have shortcuts working
+    addAction( m_actionCloseWindow );
+    addAction( m_actionQuit );
+    addAction( m_actionNewLayout );
+    addAction( m_actionOpen );
+    addAction( m_actionSave );
+    addAction( m_actionSaveAs );
+    addAction( m_actionShowMenuBar );
+    addAction( m_actionShowToolBar );
 
     show();
 }
@@ -245,4 +266,42 @@ void LayoutEdit::enableCertainActions( bool b )
 {
     m_actionRemoveLayout->setEnabled( b );
     m_actionRename->setEnabled( b );
+}
+
+void LayoutEdit::setActionSetting( Setting::Enum e, bool value )
+{
+    switch ( e ) {
+        case Setting::showMenuBar:
+            m_actionShowMenuBar->setChecked( value );
+            break;
+        case Setting::showToolBar:
+            m_actionShowToolBar->setChecked( value );
+            break;
+        case Setting::useTrayIconFromTheme:
+            m_actionUseThemeTrayIcon->setChecked( value );
+            break;
+        default:
+            assert( !"unknown setting" );
+    }
+}
+
+void LayoutEdit::settingActionTriggered()
+{
+    const QAction* action = qobject_cast<QAction*>( QObject::sender() );
+    assert( action );
+    const Setting::Enum e = static_cast<Setting::Enum>( action->data().toInt() );
+    const bool checked = action->isChecked();
+    switch ( e ) {
+        case Setting::showMenuBar:
+            menuBar()->setVisible( checked );
+            break;
+        case Setting::showToolBar:
+            m_toolBar->setVisible( checked );
+            break;
+        case Setting::useTrayIconFromTheme:
+            break;
+        default:
+            assert( !"unknown setting" );
+    }
+    emit settingChanged( e, checked );
 }

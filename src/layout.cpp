@@ -1,9 +1,12 @@
+#include <cassert>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <QDir>
 #include <QFileDialog>
+#include <QSettings>
 
 #include "layout.h"
 #include "config.h"
@@ -16,8 +19,11 @@ LayoutManager::LayoutManager( bool useTrayIcon, const QString &devdir, const QSt
       updateDevicesAction(new QAction(QIcon::fromTheme("view-refresh"),tr("Update &Joystick Devices"),this)),
       updateLayoutsAction(new QAction(QIcon::fromTheme("view-refresh"),tr("Update &Layout List"),this)),
       quitAction(new QAction(QIcon::fromTheme("application-exit"),tr("&Quit"),this)),
-      le(0) {
-
+    m_showMenuBar( true ),
+    m_showToolBar( true ),
+    m_useTrayIconFromTheme( false )
+{
+    settingsLoad();
 #ifdef WITH_LIBUDEV
     udevNotifier = 0;
     udev = 0;
@@ -535,6 +541,10 @@ void LayoutManager::iconClick() {
     }
     //otherwise, make a new LayoutEdit dialog and show it.
     le = new LayoutEdit(this);
+    le->setActionSetting( Setting::showMenuBar, m_showMenuBar );
+    le->setActionSetting( Setting::showToolBar, m_showToolBar );
+    le->setActionSetting( Setting::useTrayIconFromTheme, m_useTrayIconFromTheme );
+    connect( le, SIGNAL( settingChanged( Setting::Enum, bool ) ), this, SLOT( setSetting( Setting::Enum, bool ) ) );
     le->setLayout(currentLayout);
 }
 
@@ -719,8 +729,66 @@ void LayoutManager::removeJoyPad(int index) {
     }
 }
 
+namespace SettingName {
+    const char currentLayout[] = "currentLayout";
+    const char groupName[] = "QJoyPad";
+    const char showMenuBar[] = "showMenuBar";
+    const char showToolBar[] = "showToolBar";
+    const char useTrayIconFromTheme[] = "useTrayIconFromTheme";
+} // namespace SettingName
+
+static const QString getConfigFilePath()
+{
+    return QStringList( { QDir::homePath(), ".config", "qjoypad", "qjoypad.ini" } ).join( QDir::separator() );
+}
+
+void LayoutManager::settingsSave() const
+{
+    QSettings settings( getConfigFilePath(), QSettings::IniFormat );
+    settings.beginGroup( SettingName::groupName );
+    settings.setValue( SettingName::currentLayout, currentLayout );
+    settings.setValue( SettingName::showMenuBar, m_showMenuBar );
+    settings.setValue( SettingName::showToolBar, m_showToolBar );
+    settings.setValue( SettingName::useTrayIconFromTheme, m_useTrayIconFromTheme );
+    settings.endGroup();
+}
+
+void LayoutManager::settingsLoad()
+{
+    QSettings settings( getConfigFilePath(), QSettings::IniFormat );
+    settings.beginGroup( SettingName::groupName );
+    currentLayout = settings.value( SettingName::currentLayout, QString() ).toString();
+    m_showMenuBar = settings.value( SettingName::showMenuBar, true ).toBool();
+    m_showToolBar = settings.value( SettingName::showToolBar, true ).toBool();
+    m_useTrayIconFromTheme = settings.value( SettingName::useTrayIconFromTheme, false ).toBool();
+    settings.endGroup();
+}
+
+void LayoutManager::setSetting( Setting::Enum e, bool value )
+{
+    switch ( e ) {
+        case Setting::showMenuBar:
+            m_showMenuBar = value;
+            break;
+        case Setting::showToolBar:
+            m_showToolBar = value;
+            break;
+        case Setting::useTrayIconFromTheme:
+            m_useTrayIconFromTheme = value;
+            updateTrayIcon();
+            break;
+        default:
+            assert( !"unknown setting" );
+    }
+}
+
+void LayoutManager::updateTrayIcon()
+{
+
+}
+
 void LayoutManager::requestQuit()
 {
-    saveDefault();
+    settingsSave();
     emit quit();
 }
