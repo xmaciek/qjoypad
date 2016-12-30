@@ -57,7 +57,6 @@ class JoyPadWidget : public QWidget {
         QGridLayout *layoutMain;
         QList<AxisWidget*> axes;
         QList<ButtonWidget*> buttons;
-        QPushButton *btnClear, *btnAll;
 		
 		//the quickset window, when we create it
 		QuickSet* quickset;

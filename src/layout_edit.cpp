@@ -13,14 +13,7 @@ LayoutEdit::LayoutEdit( LayoutManager* l ) :
       mainLayout(0),
       padStack(0),
       joyButtons(0),
-      cmbLayouts(0),
-      btnAdd(0),
-      btnRem(0),
-      btnUpd(0),
-      btnRev(0),
-      btnExport(0),
-      btnImport(0),
-      btnRename(0)
+      cmbLayouts(0)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle( QJOYPAD_NAME );
@@ -31,62 +24,9 @@ LayoutEdit::LayoutEdit( LayoutManager* l ) :
     mainLayout->setSpacing(5);
     mainLayout->setMargin(5);
 
-    QFrame* frame = new QFrame( 0 );
-    frame->setFrameStyle(QFrame::Box | QFrame::Sunken);
-    QGridLayout* g = new QGridLayout(frame);
-    g->setMargin(5);
-    g->setSpacing(5);
-    cmbLayouts = new QComboBox(frame);
+    cmbLayouts = new QComboBox( 0 );
     connect(cmbLayouts, SIGNAL(activated(int)), this, SLOT(load(int)));
-
-    QHBoxLayout *layoutLayout = new QHBoxLayout( 0 );
-
-    //most of these buttons can link directly into slots in the LayoutManager
-    btnAdd = new QPushButton(frame);
-    btnAdd->setIcon(QIcon::fromTheme("list-add"));
-    btnAdd->setToolTip(tr("Add Layout"));
-    if (btnAdd->icon().isNull()) {
-        btnAdd->setText("+");
-    }
-    btnAdd->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    connect(btnAdd, SIGNAL(clicked()), lm, SLOT(saveAs()));
-
-    btnRem = new QPushButton(frame);
-    btnRem->setIcon(QIcon::fromTheme("list-remove"));
-    if (btnRem->icon().isNull()) {
-        btnRem->setText("-");
-    }
-    btnRem->setToolTip(tr("Remove Layout"));
-    btnRem->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    connect(btnRem, SIGNAL(clicked()), lm, SLOT(remove()));
-
-    btnRename = new QPushButton(tr("&Rename"), frame);
-    btnRename->setToolTip(tr("Rename Layout"));
-    btnRename->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    connect(btnRename, SIGNAL(clicked()), lm, SLOT(rename()));
-
-    layoutLayout->addWidget(cmbLayouts);
-    layoutLayout->addWidget(btnAdd);
-    layoutLayout->addWidget(btnRem);
-    layoutLayout->addWidget(btnRename);
-    mainLayout->addLayout(layoutLayout);
-
-    btnImport = new QPushButton(QIcon::fromTheme("document-open"), tr("&Import"), frame);
-    connect(btnImport, SIGNAL(clicked()), lm, SLOT(importLayout()));
-    g->addWidget(btnImport,1,0);
-
-    btnExport = new QPushButton(QIcon::fromTheme("document-save-as"), tr("E&xport"), frame);
-    connect(btnExport, SIGNAL(clicked()), lm, SLOT(exportLayout()));
-    g->addWidget(btnExport,1,1);
-
-    btnUpd = new QPushButton(QIcon::fromTheme("document-save"), tr("&Save"), frame);
-    connect(btnUpd, SIGNAL(clicked()), lm, SLOT(save()));
-    g->addWidget(btnUpd,1,2);
-
-    btnRev = new QPushButton(QIcon::fromTheme("document-revert"), tr("Re&vert"), frame);
-    connect(btnRev, SIGNAL(clicked()), lm, SLOT(reload()));
-    g->addWidget(btnRev,1,3);
-    mainLayout->addWidget( frame );
+    mainLayout->addWidget( cmbLayouts );
 
     //produce a list of names for the FlashRadioArray
     //this is only necesary since joystick devices need not always be
@@ -96,17 +36,16 @@ LayoutEdit::LayoutEdit( LayoutManager* l ) :
         names.append(joypad->getName());
         connect(this, SIGNAL(focusStateChanged(bool)), joypad, SLOT(focusChange(bool)));
     }
-    
+
     //flash radio array
     joyButtons = new FlashRadioArray(names, true, 0 );
     mainLayout->addWidget( joyButtons );
-    
+
     //we have a WidgetStack to represent the multiple joypads
     padScroll = new QScrollArea( 0 );
     padScroll->setWidgetResizable(true);
     mainLayout->addWidget(padScroll);
     padStack = new QStackedWidget( 0 );
-    padStack->setFrameStyle(QFrame::Box | QFrame::Sunken );
     padScroll->setWidget(padStack);
 
     //go through each of the available joysticks
@@ -123,18 +62,6 @@ LayoutEdit::LayoutEdit( LayoutManager* l ) :
     connect( joyButtons, SIGNAL( changed( int ) ), padStack, SLOT( setCurrentIndex( int )));
 
     updateLayoutList();
-
-    //add the buttons at the bottom.
-    QHBoxLayout* h = new QHBoxLayout( 0 );
-    h->setMargin(0);
-    h->setSpacing(5);
-    QPushButton* close = new QPushButton(QIcon::fromTheme("window-close"), tr("&Close Dialog"), 0 );
-    connect(close, SIGNAL(clicked()), this, SLOT(close()));
-    h->addWidget(close);
-    QPushButton* quit = new QPushButton(QIcon::fromTheme("application-exit"), tr("&Quit"), 0 );
-    connect( quit, SIGNAL( clicked() ), lm, SLOT( requestQuit() ) );
-    h->addWidget(quit);
-    mainLayout->addLayout(h);
     connect(qApp, SIGNAL(focusChanged ( QWidget * , QWidget *  ) ), this, 
         SLOT(appFocusChanged(QWidget *, QWidget *)));
 
@@ -226,10 +153,6 @@ void LayoutEdit::setLayout(const QString &layout) {
             break;
         }
     }
-
-    bool hasLayout = !layout.isNull();
-    btnRem->setEnabled(hasLayout);
-    btnRename->setEnabled(hasLayout);
 
     //update all the JoyPadWidgets.
     for (int i = 0, n = lm->available.count(); i < n; i++) {

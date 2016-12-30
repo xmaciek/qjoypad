@@ -51,7 +51,6 @@ protected:
         QStackedWidget *padStack;
         FlashRadioArray *joyButtons;
         QComboBox* cmbLayouts;
-        QPushButton *btnAdd, *btnRem, *btnUpd, *btnRev, *btnExport, *btnImport, *btnRename;
     QActionPtr m_actionCloseWindow;
     QActionPtr m_actionQuit;
     // ----
