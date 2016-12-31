@@ -1,5 +1,4 @@
-#ifndef QJOYPAD_ICON_H
-#define QJOYPAD_ICON_H
+#pragma once
 
 #include <QDialog>
 #include <QMenu>
@@ -8,7 +7,6 @@
 #include <QMouseEvent>
 #include <QCloseEvent>
 
-#include "constant.h"
 
 class FloatingIcon : public QDialog {
     Q_OBJECT
@@ -31,5 +29,3 @@ signals:
     void clicked();
     void quit();
 };
-
-#endif

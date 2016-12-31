@@ -1,8 +1,10 @@
+#include "floatingicon.hpp"
+
 #include <cassert>
 #include <QPainter>
 
-#include "icon.h"
 #include "config.h"
+#include "constant.h"
 
 FloatingIcon::FloatingIcon()
 {

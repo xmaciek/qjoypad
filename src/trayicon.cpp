@@ -3,7 +3,7 @@
 #include <cassert>
 
 #include <QSystemTrayIcon>
-#include "icon.h"
+#include "floatingicon.hpp"
 
 TrayIcon::TrayIcon( Type t ) :
     m_type( t )
