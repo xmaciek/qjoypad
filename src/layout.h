@@ -1,7 +1,6 @@
 #ifndef QJOYPAD_LAYOUT_H
 #define QJOYPAD_LAYOUT_H
 
-
 //to allow for interprocess communications (ie, signaling a running instance of
 //qjoypad by running "qjoypad layout-name", etc.) QJoyPad uses signals to
 //triger certain events. This is for signaling the main program to update
@@ -27,12 +26,12 @@
 #include "joypad.h"
 //for errors
 #include "error.h"
-//For displaying a floating icon instead of a tray icon
-#include "icon.h"
+
 //So we can know if there is a graphical version of the Layout Manager displayed
 #include "layout_edit.h"
 
 #include "setting.hpp"
+#include "trayicon.hpp"
 
 //handles loading, saving, and changing of layouts
 class LayoutManager : public QObject {
@@ -73,7 +72,7 @@ public slots:
 		
 		//when the tray icon is clicked
 		void iconClick();
-        void trayClick(QSystemTrayIcon::ActivationReason reason);
+
 		//rebuild the popup menu with the current information
 		void fillPopup();
 		//update the list of available joystick devices
@@ -100,8 +99,10 @@ private:
         QString settingsDir;
 		//the layout that is currently in use
         QString currentLayout;
-		//the popup menu from the tray/floating icon
-        QMenu trayMenu;
+
+    //the popup menu from the tray/floating icon
+    QPointer<QMenu> m_trayMenu;
+
         //known actions for the popup menu
         QActionGroup *layoutGroup;
         QAction *updateDevicesAction;
@@ -111,6 +112,8 @@ private:
         bool m_showMenuBar;
         bool m_showToolBar;
         bool m_useTrayIconFromTheme;
+
+    QPointer<TrayIcon> m_trayIcon;
 
 		//if there is a LayoutEdit open, this points to it. Otherwise, NULL.	
         QPointer<LayoutEdit> le;

@@ -11,10 +11,10 @@
 #include "layout.h"
 #include "config.h"
 
-
 //initialize things and set up an icon  :)
 LayoutManager::LayoutManager( bool useTrayIcon, const QString &devdir, const QString &settingsDir )
     : devdir(devdir), settingsDir(settingsDir),
+    m_trayMenu( new QMenu() ),
       layoutGroup(new QActionGroup(this)),
       updateDevicesAction(new QAction(QIcon::fromTheme("view-refresh"),tr("Update &Joystick Devices"),this)),
       updateLayoutsAction(new QAction(QIcon::fromTheme("view-refresh"),tr("Update &Layout List"),this)),
@@ -35,25 +35,12 @@ LayoutManager::LayoutManager( bool useTrayIcon, const QString &devdir, const QSt
     }
 #endif
 
-    //prepare the popup first.
-    fillPopup();
-
-    //make a tray icon
-    if (useTrayIcon) {
-        QSystemTrayIcon *tray = new QSystemTrayIcon(this);
-        tray->setContextMenu(&trayMenu);
-        tray->setIcon(QIcon(QJOYPAD_ICON24));
-        tray->show();
-        connect(tray, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(trayClick(QSystemTrayIcon::ActivationReason)));
-    }
-    //or make a floating icon
-    else {
-        FloatingIcon* icon = new FloatingIcon(QJOYPAD_ICON64,&trayMenu,0,"tray");
-        connect(icon, SIGNAL(clicked()), this, SLOT(iconClick()));
-        connect(icon, SIGNAL(rejected()), this, SLOT( requestQuit() ) );
-        connect(icon, SIGNAL(accepted()), this, SLOT( requestQuit() ) );
-        icon->show();
-    }
+    m_trayIcon = new TrayIcon( useTrayIcon ? TrayIcon::System : TrayIcon::Floating );
+    connect( m_trayIcon, &TrayIcon::clicked, this, &LayoutManager::iconClick );
+    connect( m_trayIcon, &TrayIcon::quit, this, &LayoutManager::requestQuit );
+    updateTrayIcon();
+    m_trayIcon->setContextMenu( m_trayMenu );
+    m_trayIcon->show();
 
     connect(updateLayoutsAction, SIGNAL(triggered()), this, SLOT(fillPopup()));
     connect(updateDevicesAction, SIGNAL(triggered()), this, SLOT(updateJoyDevs()));
@@ -548,12 +535,6 @@ void LayoutManager::iconClick() {
     le->setLayout(currentLayout);
 }
 
-void LayoutManager::trayClick(QSystemTrayIcon::ActivationReason reason) {
-    if(reason == QSystemTrayIcon::Trigger) {
-        iconClick();
-    }
-}
-
 void LayoutManager::layoutTriggered() {
     QAction *action = qobject_cast<QAction*>(sender());
     //if they clicked on a Layout name, load it!
@@ -563,16 +544,18 @@ void LayoutManager::layoutTriggered() {
 }
 
 void LayoutManager::fillPopup() {
+    assert( m_trayMenu );
+
     //start with an empty slate
-    trayMenu.clear();
+    m_trayMenu->clear();
 
     //add in the Update options
-    trayMenu.addAction(updateLayoutsAction);
-    trayMenu.addAction(updateDevicesAction);
-    trayMenu.addSeparator();
+    m_trayMenu->addAction( updateLayoutsAction );
+    m_trayMenu->addAction( updateDevicesAction );
+    m_trayMenu->addSeparator();
 
     //add null layout
-    QAction *action = trayMenu.addAction(tr("[NO LAYOUT]"));
+    QAction *action = m_trayMenu->addAction( tr( "[NO LAYOUT]" ) );
     action->setCheckable(true);
     action->setActionGroup(layoutGroup);
     //put a check by the current one  ;)
@@ -585,7 +568,7 @@ void LayoutManager::fillPopup() {
     foreach (const QString &name, getLayoutNames()) {
         QString title = name;
         title.replace('&',"&&");
-        action = trayMenu.addAction(title);
+        action = m_trayMenu->addAction( title );
         action->setData(name);
         action->setCheckable(true);
         action->setActionGroup(layoutGroup);
@@ -595,10 +578,10 @@ void LayoutManager::fillPopup() {
         }
         connect(action, SIGNAL(triggered()), this, SLOT(layoutTriggered()));
     }
-    trayMenu.addSeparator();
+    m_trayMenu->addSeparator();
 
     //and, at the end, quit!
-    trayMenu.addAction(quitAction);
+    m_trayMenu->addAction( quitAction );
 }
 
 void LayoutManager::updateJoyDevs() {
@@ -784,7 +767,8 @@ void LayoutManager::setSetting( Setting::Enum e, bool value )
 
 void LayoutManager::updateTrayIcon()
 {
-
+    assert( m_trayIcon );
+    m_trayIcon->setIcon( m_useTrayIconFromTheme ? QIcon::fromTheme( "input-gaming" ) : QIcon( QJOYPAD_ICON64 ) );
 }
 
 void LayoutManager::requestQuit()

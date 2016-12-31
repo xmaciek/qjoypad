@@ -20,7 +20,9 @@ set(qjoypad_SOURCES
 	layout.cpp
 	layout_edit.cpp
 	main.cpp
-	quickset.cpp)
+	quickset.cpp
+	trayicon.cpp
+)
 
 set(qjoypad_QOBJECT_HEADERS
 	axis_edit.h
@@ -38,7 +40,9 @@ set(qjoypad_QOBJECT_HEADERS
 	keydialog.hpp
 	layout_edit.h
 	layout.h
-	quickset.h)
+	quickset.h
+	trayicon.hpp
+)
 
 qt5_wrap_cpp(qjoypad_HEADERS_MOC ${qjoypad_QOBJECT_HEADERS})
 add_executable(qjoypad ${qjoypad_SOURCES} ${qjoypad_HEADERS_MOC})
